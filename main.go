@@ -44,7 +44,7 @@ func main() {
 		panic(err.Error())
 	}
 	clientSet = cs
-	test()
+	// test()
 
 	http.HandleFunc("/", HandleRoot)
 	http.HandleFunc("/mutate", HandleMutate)
