@@ -9,7 +9,7 @@ RUN go mod download
 
 COPY . /app
 
-RUN go build -o mutating-webhook
+RUN go build -o /app/mutating-webhook
 
 FROM golang:1.17-alpine
 

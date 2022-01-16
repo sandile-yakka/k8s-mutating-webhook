@@ -5,17 +5,20 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"flag"
 
 	"k8s.io/api/admission/v1beta1"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
+	rest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 )
@@ -39,6 +42,12 @@ var (
 )
 
 func main() {
+
+	flag.IntVar(&parameters.port, "port", 8443, "Webhook server port.")
+	flag.StringVar(&parameters.certFile, "tlsCertFile", "/etc/webhook/certs/tls.crt", "File containing the x509 Certificate for HTTPS.")
+	flag.StringVar(&parameters.keyFile, "tlsKeyFile", "/etc/webhook/certs/tls.key", "File containing the x509 private key to --tlsCertFile.")
+	flag.Parse()
+
 	cs, err := kubernetes.NewForConfig(getKubeConfig())
 	if err != nil {
 		panic(err.Error())
@@ -48,6 +57,9 @@ func main() {
 
 	http.HandleFunc("/", HandleRoot)
 	http.HandleFunc("/mutate", HandleMutate)
+
+	log.Fatal(http.ListenAndServeTLS(":"+strconv.Itoa(parameters.port), parameters.certFile, parameters.keyFile, nil))
+
 }
 
 func HandleRoot(w http.ResponseWriter, r *http.Request) {
@@ -56,7 +68,7 @@ func HandleRoot(w http.ResponseWriter, r *http.Request) {
 
 func HandleMutate(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
-	err = ioutil.WriteFile("/tmp/request", body, 0644)
+
 	if err != nil {
 		panic(err.Error())
 	}
@@ -128,6 +140,7 @@ func getKubeConfig() *rest.Config {
 	}
 
 	if !useKubeConfig {
+		fmt.Print("test")
 		c, err := rest.InClusterConfig()
 		if err != nil {
 			panic(err.Error())
