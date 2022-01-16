@@ -10,9 +10,10 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"k8s.io/api/admission/v1beta1"
+	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/client-go/applyconfigurations/admissionregistration/v1beta1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -87,6 +88,34 @@ func HandleMutate(w http.ResponseWriter, r *http.Request) {
 
 	labels := pod.ObjectMeta.Labels
 	labels["example-webhook"] = "it-worked"
+
+	patches = append(patches, patchOperation{
+		Op:    "add",
+		Path:  "/metadata/labels",
+		Value: labels,
+	})
+
+	patchBytes, err := json.Marshal(patches)
+
+	if err != nil {
+		fmt.Errorf("could not marshal JSON patch: %v", err)
+	}
+
+	admissionReviewResponse := v1beta1.AdmissionReview{
+		Response: &v1beta1.AdmissionResponse{
+			UID:     admissionReviewReq.Request.UID,
+			Allowed: true,
+		},
+	}
+
+	admissionReviewResponse.Response.Patch = patchBytes
+
+	bytes, err := json.Marshal(&admissionReviewResponse)
+	if err != nil {
+		fmt.Errorf("marshalling repsonse: %v", err)
+	}
+
+	w.Write(bytes)
 }
 
 func getKubeConfig() *rest.Config {
