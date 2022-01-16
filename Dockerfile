@@ -13,6 +13,6 @@ RUN go build -o mutating-webhook
 
 FROM golang:1.17-alpine
 
-COPY --from=build-env /mutating-webhook /usr/local/bin/mutating-webhook
+COPY --from=build-env /app/mutating-webhook /usr/local/bin/mutating-webhook
 
 ENTRYPOINT ["mutating-webhook"]
