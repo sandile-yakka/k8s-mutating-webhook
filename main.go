@@ -140,7 +140,6 @@ func getKubeConfig() *rest.Config {
 	}
 
 	if !useKubeConfig {
-		fmt.Print("test")
 		c, err := rest.InClusterConfig()
 		if err != nil {
 			panic(err.Error())
