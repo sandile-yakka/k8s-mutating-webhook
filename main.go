@@ -99,7 +99,13 @@ func HandleMutate(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	admissionReviewResponse.Response.Patch = patchResourceRequests(pod)
+	patchBytes, err := json.Marshal(patchResourceRequests(pod))
+
+	if err != nil {
+		fmt.Errorf("could not marshal JSON patch: %v", err)
+	}
+
+	admissionReviewResponse.Response.Patch = patchBytes
 
 	bytes, err := json.Marshal(&admissionReviewResponse)
 	if err != nil {
@@ -109,7 +115,7 @@ func HandleMutate(w http.ResponseWriter, r *http.Request) {
 	w.Write(bytes)
 }
 
-func patchResourceRequests(pod apiv1.Pod) []byte {
+func patchResourceRequests(pod apiv1.Pod) []patchOperation {
 	var patches []patchOperation
 
 	Requests := pod.Spec.Containers[0].Resources.Requests
@@ -125,13 +131,7 @@ func patchResourceRequests(pod apiv1.Pod) []byte {
 		Value: Requests,
 	})
 
-	patchBytes, err := json.Marshal(patches)
-
-	if err != nil {
-		fmt.Errorf("could not marshal JSON patch: %v", err)
-	}
-
-	return patchBytes
+	return patches
 }
 
 func getKubeConfig() *rest.Config {
