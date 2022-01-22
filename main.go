@@ -15,6 +15,7 @@ import (
 
 	"k8s.io/api/admission/v1beta1"
 	apiv1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/kubernetes"
@@ -56,7 +57,7 @@ func main() {
 	// test()
 
 	http.HandleFunc("/", HandleRoot)
-	http.HandleFunc("/mutate", HandleMutate)
+	http.HandleFunc("/AddResourceRequests", HandleMutate)
 
 	log.Fatal(http.ListenAndServeTLS(":"+strconv.Itoa(parameters.port), parameters.certFile, parameters.keyFile, nil))
 
@@ -83,34 +84,12 @@ func HandleMutate(w http.ResponseWriter, r *http.Request) {
 		errors.New("malformed admission review: request is nil")
 	}
 
-	fmt.Printf("Type: %v \t Event: %v \t Name: %v \n",
-		admissionReviewReq.Request.Kind,
-		admissionReviewReq.Request.Operation,
-		admissionReviewReq.Request.Name,
-	)
+	fmt.Printf("Type: %v \t Event: %v \t Name: %v \n", admissionReviewReq.Request.Kind, admissionReviewReq.Request.Operation, admissionReviewReq.Request.Name)
 
 	var pod apiv1.Pod
-
 	err = json.Unmarshal(admissionReviewReq.Request.Object.Raw, &pod)
 	if err != nil {
 		fmt.Errorf("could not unmarshal pod on admission request: %v", err)
-	}
-
-	var patches []patchOperation
-
-	labels := pod.ObjectMeta.Labels
-	labels["example-webhook"] = "it-worked"
-
-	patches = append(patches, patchOperation{
-		Op:    "add",
-		Path:  "/metadata/labels",
-		Value: labels,
-	})
-
-	patchBytes, err := json.Marshal(patches)
-
-	if err != nil {
-		fmt.Errorf("could not marshal JSON patch: %v", err)
 	}
 
 	admissionReviewResponse := v1beta1.AdmissionReview{
@@ -120,7 +99,7 @@ func HandleMutate(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	admissionReviewResponse.Response.Patch = patchBytes
+	admissionReviewResponse.Response.Patch = patchResourceRequests(pod)
 
 	bytes, err := json.Marshal(&admissionReviewResponse)
 	if err != nil {
@@ -128,6 +107,31 @@ func HandleMutate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(bytes)
+}
+
+func patchResourceRequests(pod apiv1.Pod) []byte {
+	var patches []patchOperation
+
+	Requests := pod.Spec.Containers[0].Resources.Requests
+	cpu := resource.NewScaledQuantity(250, resource.Mega)
+	mega := resource.NewScaledQuantity(100, resource.Mega)
+
+	Requests.Cpu().Add(*cpu)
+	Requests.Memory().Add(*mega)
+
+	patches = append(patches, patchOperation{
+		Op:    "add",
+		Path:  "/spec/containers/0/resources/requests",
+		Value: Requests,
+	})
+
+	patchBytes, err := json.Marshal(patches)
+
+	if err != nil {
+		fmt.Errorf("could not marshal JSON patch: %v", err)
+	}
+
+	return patchBytes
 }
 
 func getKubeConfig() *rest.Config {
