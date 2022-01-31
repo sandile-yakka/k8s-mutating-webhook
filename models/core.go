@@ -18,5 +18,5 @@ type Requests struct {
 }
 
 type Resources struct {
-	Requests Requests `json:"requestsomitempty"`
+	Requests Requests `json:"requests,omitempty"`
 }

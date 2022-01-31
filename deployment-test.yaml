@@ -4,7 +4,8 @@ metadata:
   name: nginx-deployment
   labels:
     app: nginx
-    mutating-webhook-enabled: "true"
+    #mutating-webhook-enabled: "true"
+    example-webhook-enabled: "true"
 spec:
   replicas: 1
   selector:
@@ -22,3 +23,5 @@ spec:
           - "sh"
           - "-c"
           - "sleep 360"
+        resources: 
+          requests: {}            

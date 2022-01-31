@@ -69,6 +69,8 @@ func HandleMutate(w http.ResponseWriter, r *http.Request) {
 		fmt.Errorf("marshalling repsonse: %v", err)
 	}
 
+	fmt.Print(string(bytes))
+
 	w.Write(bytes)
 }
 
