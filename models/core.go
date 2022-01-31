@@ -14,7 +14,7 @@ type PatchOperation struct {
 
 type Requests struct {
 	Cpu    string `json:"cpu,omitempty"`
-	Memory string `json:"memory,omitempty`
+	Memory string `json:"memory,omitempty"`
 }
 
 type Resources struct {

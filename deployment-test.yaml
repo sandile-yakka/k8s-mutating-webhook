@@ -23,5 +23,4 @@ spec:
           - "sh"
           - "-c"
           - "sleep 360"
-        resources: 
-          requests: {}            
+        resources: {}
