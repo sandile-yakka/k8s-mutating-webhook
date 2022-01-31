@@ -1,0 +1,85 @@
+{
+  "kind": "AdmissionReview",
+  "apiVersion": "admission.k8s.io/v1beta1",
+  "request": {
+    "uid": "dffc1f0f-0c0b-4d15-892f-71524ecfd06c",
+    "kind": {
+      "group": "apps",
+      "version": "v1",
+      "kind": "Deployment"
+    },
+    "resource": {
+      "group": "app",
+      "version": "v1",
+      "resource": "deployments"
+    },
+    "requestKind": {
+      "group": "apps",
+      "version": "v1",
+      "kind": "Deployment"
+    },
+    "requestResource": {
+      "group": "apps",
+      "version": "v1",
+      "resource": "Deployment"
+    },
+    "name": "demo-pod",
+    "namespace": "default",
+    "operation": "CREATE",
+    "userInfo": {
+      "username": "kubernetes-admin",
+      "groups": [
+        "system:masters",
+        "system:authenticated"
+      ]
+    },
+    "object": {
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "name": "nginx-deployment",
+    "labels": {
+      "app": "nginx",
+      "example-webhook-enabled": "true"
+    }
+  },
+  "spec": {
+    "replicas": 1,
+    "selector": {
+      "matchLabels": {
+        "app": "nginx"
+      }
+    },
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "nginx"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "nginx",
+            "image": "busybox",
+            "command": [
+              "sh",
+              "-c",
+              "sleep 360"
+            ],
+            "resources": {
+              "requests": {}
+            }
+          }
+        ]
+      }
+    }
+  }
+},
+    "oldObject": null,
+    "dryRun": false,
+    "options": {
+      "kind": "CreateOptions",
+      "apiVersion": "meta.k8s.io/v1"
+    }
+  }
+}
